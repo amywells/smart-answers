@@ -1,7 +1,7 @@
 module SmartAnswer::Calculators
   class ArrestedAbroad
     # created for the help-if-you-are-arrested-abroad calculator
-    attr_reader :data
+    attr_accessor :country
 
     PRISONER_PACKS = YAML.load_file(Rails.root.join("config/smart_answers/prisoner_packs.yml")).freeze
 
@@ -30,6 +30,74 @@ module SmartAnswer::Calculators
 
     def get_country_regions(slug)
       PRISONER_PACKS.find { |c| c["slug"] == slug }["regions"]
+    end
+
+    def location
+      @location ||= WorldLocation.find(country)
+      raise InvalidResponse unless @location
+
+      @location
+    end
+
+    def organisation
+      location.fco_organisation
+    end
+
+    def country_name
+      location.name
+    end
+
+    def pdf
+      generate_url_for_download(country, "pdf", "Prisoner pack for #{country_name}")
+    end
+
+    def doc
+      generate_url_for_download(country, "doc", "Prisoner pack for #{country_name}")
+    end
+
+    def benefits
+      generate_url_for_download(country, "benefits", "Benefits or legal aid in #{country_name}")
+    end
+
+    def prison
+      generate_url_for_download(country, "prison", "Information on prisons and prison procedures in #{country_name}")
+    end
+
+    def judicial
+      generate_url_for_download(country, "judicial", "Information on the judicial system and procedures in #{country_name}")
+    end
+
+    def police
+      generate_url_for_download(country, "police", "Information on the police and police procedures in #{country_name}")
+    end
+
+    def consul
+      generate_url_for_download(country, "consul", "Consul help available in #{country_name}")
+    end
+
+    def lawyer
+      generate_url_for_download(country, "lawyer", "English speaking lawyers and translators/interpreters in #{country_name}")
+    end
+
+    def has_extra_downloads
+      [police, judicial, consul, prison, lawyer, benefits, doc, pdf].count { |x|
+        x != ""
+      }.positive? || countries_with_regions.include?(country)
+    end
+
+    def region_downloads
+      links = []
+      if countries_with_regions.include?(country)
+        regions = get_country_regions(country)
+        regions.each_value do |val|
+          links << "- [#{val['url_text']}](#{val['link']})"
+        end
+      end
+      links.join("\n")
+    end
+
+    def transfer_back
+      %w[austria belgium croatia denmark finland hungary italy latvia luxembourg malta netherlands slovakia].exclude?(country)
     end
   end
 end
