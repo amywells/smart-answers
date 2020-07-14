@@ -7,20 +7,6 @@ module SmartAnswer
       status :published
       satisfies_need "558b11d4-e164-40e2-96a2-f20643fe4539"
 
-      multiple_choice :two_carers do
-        option "yes"
-        option "no"
-
-        on_response do |response|
-          self.calculator = Calculators::PayLeaveForParentsCalculator.new
-          calculator.two_carers = response
-        end
-
-        next_node do
-          outcome :due_date
-        end
-      end
-
       date_question :due_date do
         on_response do |response|
           calculator.due_date = response
@@ -42,16 +28,7 @@ module SmartAnswer
         end
 
         next_node do
-          if calculator.two_carers?
-            question :employment_status_of_partner
-          else
-            case calculator.employment_status_of_mother
-            when "employee", "worker"
-              question :mother_started_working_before_continuity_start_date
-            when "self-employed", "unemployed"
-              question :mother_worked_at_least_26_weeks
-            end
-          end
+          question :employment_status_of_partner
         end
       end
 
@@ -111,14 +88,16 @@ module SmartAnswer
 
         next_node do
           if calculator.mother_continuity? && calculator.mother_lower_earnings?
-            if calculator.two_carers?
-              case calculator.employment_status_of_partner
-              when "employee", "worker"
-                question :partner_started_working_before_continuity_start_date
-              when "self-employed", "unemployed"
-                question :partner_worked_at_least_26_weeks
-              end
-            elsif calculator.employment_status_of_mother == "employee"
+            # TODO Some combination of the following
+
+            case calculator.employment_status_of_partner
+            when "employee", "worker"
+              question :partner_started_working_before_continuity_start_date
+            when "self-employed", "unemployed"
+              # TODO (was question :partner_worked_at_least_26_weeks)
+            end
+
+            if calculator.employment_status_of_mother == "employee"
               outcome :outcome_mat_leave_mat_pay
             elsif calculator.employment_status_of_mother == "worker"
               outcome :outcome_mat_pay
@@ -151,54 +130,31 @@ module SmartAnswer
         end
 
         next_node do
-          if calculator.two_carers?
-            if %w[employee worker].include?(calculator.employment_status_of_partner)
-              question :partner_started_working_before_continuity_start_date
-            elsif %w[self-employed unemployed].include?(calculator.employment_status_of_partner)
-              if calculator.employment_status_of_mother == "employee"
-                if calculator.mother_continuity?
-                  question :partner_worked_at_least_26_weeks
-                elsif calculator.mother_still_working_on_continuity_end_date == "yes"
-                  if calculator.mother_earnings_employment?
-                    outcome :outcome_mat_allowance_mat_leave
-                  else
-                    outcome :outcome_mat_leave
-                  end
-                elsif calculator.mother_still_working_on_continuity_end_date == "no"
-                  if calculator.mother_earnings_employment?
-                    outcome :outcome_mat_allowance
-                  else
-                    outcome :outcome_birth_nothing
-                  end
+          if %w[employee worker].include?(calculator.employment_status_of_partner)
+            question :partner_started_working_before_continuity_start_date
+          elsif %w[self-employed unemployed].include?(calculator.employment_status_of_partner)
+            if calculator.employment_status_of_mother == "employee"
+              if calculator.mother_continuity?
+                # TODO (was question :partner_worked_at_least_26_weeks)
+              elsif calculator.mother_still_working_on_continuity_end_date == "yes"
+                if calculator.mother_earnings_employment?
+                  outcome :outcome_mat_allowance_mat_leave
+                else
+                  outcome :outcome_mat_leave
                 end
-              elsif calculator.mother_earnings_employment?
-                outcome :outcome_mat_allowance
-              elsif %w[worker self-employed].include?(calculator.employment_status_of_mother) ||
-                  calculator.employment_status_of_partner == "unemployed"
-                outcome :outcome_birth_nothing
-              elsif calculator.employment_status_of_partner == "self-employed"
-                outcome :outcome_mat_allowance_14_weeks
+              elsif calculator.mother_still_working_on_continuity_end_date == "no"
+                if calculator.mother_earnings_employment?
+                  outcome :outcome_mat_allowance
+                else
+                  outcome :outcome_birth_nothing
+                end
               end
-            end
-          elsif calculator.employment_status_of_mother == "employee"
-            if calculator.mother_still_working_on_continuity_end_date == "yes"
-              if calculator.mother_earnings_employment?
-                outcome :outcome_mat_allowance_mat_leave
-              else
-                outcome :outcome_mat_leave
-              end
-            elsif calculator.mother_still_working_on_continuity_end_date == "no"
-              if calculator.mother_earnings_employment?
-                outcome :outcome_mat_allowance
-              else
-                outcome :outcome_single_birth_nothing
-              end
-            end
-          elsif %w[worker self-employed unemployed].include?(calculator.employment_status_of_mother)
-            if calculator.mother_earnings_employment?
+            elsif calculator.mother_earnings_employment?
               outcome :outcome_mat_allowance
-            else
-              outcome :outcome_single_birth_nothing
+            elsif %w[worker self-employed].include?(calculator.employment_status_of_mother) || calculator.employment_status_of_partner == "unemployed"
+              outcome :outcome_birth_nothing
+            elsif calculator.employment_status_of_partner == "self-employed"
+              outcome :outcome_mat_allowance_14_weeks
             end
           end
         end
@@ -283,9 +239,9 @@ module SmartAnswer
             elsif calculator.partner_continuity?
               if calculator.employment_status_of_mother == "employee"
                 if calculator.mother_continuity? && calculator.mother_lower_earnings?
-                  question :partner_worked_at_least_26_weeks
+                  # TODO (was question :partner_worked_at_least_26_weeks)
                 elsif calculator.mother_continuity?
-                  question :partner_worked_at_least_26_weeks
+                  # TODO (was question :partner_worked_at_least_26_weeks)
                 elsif calculator.mother_still_working_on_continuity_end_date == "yes"
                   if calculator.mother_earnings_employment?
                     outcome :outcome_mat_allowance_mat_leave_pat_leave_pat_shared_leave
@@ -301,7 +257,7 @@ module SmartAnswer
                 end
               elsif calculator.employment_status_of_mother == "worker"
                 if calculator.mother_continuity? && calculator.mother_lower_earnings?
-                  question :partner_worked_at_least_26_weeks
+                  # TODO (was question :partner_worked_at_least_26_weeks)
                 elsif !calculator.mother_continuity? || !calculator.mother_lower_earnings?
                   if calculator.mother_earnings_employment?
                     outcome :outcome_mat_allowance_pat_leave_pat_shared_leave
@@ -320,7 +276,7 @@ module SmartAnswer
               if calculator.employment_status_of_mother == "employee"
                 if calculator.mother_still_working_on_continuity_end_date == "yes"
                   if calculator.mother_continuity?
-                    question :partner_worked_at_least_26_weeks
+                    # TODO (was question :partner_worked_at_least_26_weeks)
                   elsif calculator.mother_earnings_employment?
                     outcome :outcome_mat_allowance_mat_leave
                   elsif !calculator.mother_earnings_employment?
@@ -335,7 +291,7 @@ module SmartAnswer
                 end
               elsif calculator.employment_status_of_mother == "worker"
                 if calculator.mother_continuity? && calculator.mother_lower_earnings?
-                  question :partner_worked_at_least_26_weeks
+                  # TODO (was question :partner_worked_at_least_26_weeks)
                 elsif !calculator.mother_continuity? || !calculator.mother_lower_earnings?
                   if calculator.mother_earnings_employment?
                     outcome :outcome_mat_allowance
@@ -395,10 +351,10 @@ module SmartAnswer
             elsif calculator.partner_continuity?
               if calculator.employment_status_of_mother == "employee"
                 if calculator.mother_continuity? && calculator.mother_lower_earnings?
-                  question :partner_worked_at_least_26_weeks
+                  # TODO (was question :partner_worked_at_least_26_weeks)
                 elsif !calculator.mother_continuity? || !calculator.mother_lower_earnings?
                   if calculator.mother_continuity?
-                    question :partner_worked_at_least_26_weeks
+                    # TODO (was question :partner_worked_at_least_26_weeks)
                   elsif calculator.mother_earnings_employment?
                     outcome :outcome_mat_allowance_mat_leave
                   elsif !calculator.mother_earnings_employment?
@@ -420,7 +376,7 @@ module SmartAnswer
               end
             elsif calculator.employment_status_of_mother == "worker"
               if calculator.mother_continuity? && calculator.mother_lower_earnings?
-                question :partner_worked_at_least_26_weeks
+                # TODO (was question :partner_worked_at_least_26_weeks)
               elsif !calculator.mother_continuity? || !calculator.mother_lower_earnings?
                 if calculator.mother_earnings_employment?
                   outcome :outcome_mat_allowance
@@ -439,7 +395,7 @@ module SmartAnswer
             if calculator.employment_status_of_mother == "employee"
               if calculator.mother_still_working_on_continuity_end_date == "yes"
                 if calculator.mother_continuity?
-                  question :partner_worked_at_least_26_weeks
+                  # TODO (was question :partner_worked_at_least_26_weeks)
                 elsif !calculator.mother_continuity?
                   if calculator.mother_earnings_employment?
                     outcome :outcome_mat_allowance_mat_leave
@@ -456,7 +412,7 @@ module SmartAnswer
               end
             elsif calculator.employment_status_of_mother == "worker"
               if calculator.mother_continuity? && calculator.mother_lower_earnings?
-                question :partner_worked_at_least_26_weeks
+                # TODO (was question :partner_worked_at_least_26_weeks)
               elsif !calculator.mother_continuity? || !calculator.mother_lower_earnings?
                 if calculator.mother_earnings_employment?
                   outcome :outcome_mat_allowance
@@ -475,125 +431,10 @@ module SmartAnswer
         end
       end
 
-      multiple_choice :partner_worked_at_least_26_weeks do
-        option "yes"
-        option "no"
-
-        on_response do |response|
-          calculator.partner_worked_at_least_26_weeks = response
-        end
-
-        next_node do
-          outcome :partner_earned_at_least_390
-        end
-      end
-
-      multiple_choice :partner_earned_at_least_390 do
-        option "yes"
-        option "no"
-
-        on_response do |response|
-          calculator.partner_earned_at_least_390 = response
-        end
-
-        next_node do
-          partner_earned_at_least_390_and_worked_at_least_26_weeks = calculator.earnings_employment(
-            calculator.partner_earned_at_least_390,
-            calculator.partner_worked_at_least_26_weeks,
-          )
-
-          if calculator.employment_status_of_mother == "employee"
-            if calculator.mother_continuity? && calculator.mother_lower_earnings?
-              if calculator.employment_status_of_partner == "employee"
-                if calculator.partner_continuity?
-                  if partner_earned_at_least_390_and_worked_at_least_26_weeks
-                    outcome :outcome_mat_leave_mat_pay_pat_leave_both_shared_leave_mat_shared_pay
-                  else
-                    outcome :outcome_mat_leave_mat_pay_pat_leave_pat_shared_leave
-                  end
-                elsif partner_earned_at_least_390_and_worked_at_least_26_weeks
-                  outcome :outcome_mat_leave_mat_pay_mat_shared_leave_mat_shared_pay
-                else
-                  outcome :outcome_mat_leave_mat_pay
-                end
-              elsif %w[worker self-employed unemployed].include?(calculator.employment_status_of_partner)
-                if partner_earned_at_least_390_and_worked_at_least_26_weeks
-                  outcome :outcome_mat_leave_mat_pay_mat_shared_leave_mat_shared_pay
-                else
-                  outcome :outcome_mat_leave_mat_pay
-                end
-              end
-            elsif !calculator.mother_continuity? || !calculator.mother_lower_earnings?
-              if partner_earned_at_least_390_and_worked_at_least_26_weeks
-                if calculator.employment_status_of_partner == "employee"
-                  if calculator.partner_continuity?
-                    if calculator.mother_earnings_employment?
-                      outcome :outcome_mat_allowance_mat_leave_pat_leave_both_shared_leave
-                    else
-                      outcome :outcome_mat_leave_pat_leave_mat_shared_leave
-                    end
-                  elsif calculator.mother_earnings_employment?
-                    outcome :outcome_mat_allowance_mat_leave_mat_shared_leave
-                  else
-                    outcome :outcome_mat_leave_mat_shared_leave
-                  end
-                elsif %w[worker self-employed unemployed].include?(calculator.employment_status_of_partner)
-                  if calculator.mother_earnings_employment?
-                    outcome :outcome_mat_allowance_mat_leave_mat_shared_leave
-                  else
-                    outcome :outcome_mat_leave_mat_shared_leave
-                  end
-                end
-              elsif calculator.employment_status_of_partner == "employee"
-                if calculator.partner_continuity?
-                  if calculator.mother_earnings_employment?
-                    outcome :outcome_mat_allowance_mat_leave_pat_leave_pat_shared_leave
-                  else
-                    outcome :outcome_mat_leave_pat_leave
-                  end
-                elsif calculator.mother_earnings_employment?
-                  outcome :outcome_mat_allowance_mat_leave
-                else
-                  outcome :outcome_mat_leave
-                end
-              elsif %w[worker self-employed unemployed].include?(calculator.employment_status_of_partner)
-                if calculator.mother_earnings_employment?
-                  outcome :outcome_mat_allowance_mat_leave
-                else
-                  outcome :outcome_mat_leave
-                end
-              end
-            end
-          elsif calculator.employment_status_of_mother == "worker"
-            if calculator.employment_status_of_partner == "employee"
-              if calculator.partner_continuity?
-                if partner_earned_at_least_390_and_worked_at_least_26_weeks
-                  outcome :outcome_mat_pay_pat_leave_pat_shared_leave_mat_shared_pay
-                else
-                  outcome :outcome_mat_pay_pat_leave
-                end
-              elsif partner_earned_at_least_390_and_worked_at_least_26_weeks
-                outcome :outcome_mat_pay_mat_shared_pay
-              else
-                outcome :outcome_mat_pay
-              end
-            elsif %w[worker self-employed unemployed].include?(calculator.employment_status_of_partner)
-              if partner_earned_at_least_390_and_worked_at_least_26_weeks
-                outcome :outcome_mat_pay_mat_shared_pay
-              else
-                outcome :outcome_mat_pay
-              end
-            end
-          end
-        end
-      end
-
       outcome :outcome_birth_nothing
       outcome :outcome_mat_allowance_14_weeks
       outcome :outcome_mat_allowance
       outcome :outcome_mat_allowance_mat_leave
-      outcome :outcome_mat_allowance_mat_leave_mat_shared_leave
-      outcome :outcome_mat_allowance_mat_leave_pat_leave_both_shared_leave
       outcome :outcome_mat_allowance_mat_leave_pat_leave_pat_pay_both_shared_leave_pat_shared_pay
       outcome :outcome_mat_allowance_mat_leave_pat_leave_pat_pay_pat_shared_leave_pat_shared_pay
       outcome :outcome_mat_allowance_mat_leave_pat_leave_pat_shared_leave
@@ -604,28 +445,19 @@ module SmartAnswer
       outcome :outcome_mat_allowance_pat_pay_pat_shared_pay
       outcome :outcome_mat_leave
       outcome :outcome_mat_leave_mat_pay
-      outcome :outcome_mat_leave_mat_pay_mat_shared_leave_mat_shared_pay
-      outcome :outcome_mat_leave_mat_pay_pat_leave_both_shared_leave_mat_shared_pay
       outcome :outcome_mat_leave_mat_pay_pat_leave_pat_pay_both_shared_leave_both_shared_pay
-      outcome :outcome_mat_leave_mat_pay_pat_leave_pat_shared_leave
       outcome :outcome_mat_leave_mat_pay_pat_pay_mat_shared_leave_both_shared_pay
-      outcome :outcome_mat_leave_mat_shared_leave
       outcome :outcome_mat_leave_pat_leave
-      outcome :outcome_mat_leave_pat_leave_mat_shared_leave
       outcome :outcome_mat_leave_pat_leave_pat_pay
       outcome :outcome_mat_leave_pat_leave_pat_pay_mat_shared_leave
       outcome :outcome_mat_leave_pat_pay
       outcome :outcome_mat_leave_pat_pay_mat_shared_leave
       outcome :outcome_mat_pay
-      outcome :outcome_mat_pay_mat_shared_pay
-      outcome :outcome_mat_pay_pat_leave
       outcome :outcome_mat_pay_pat_leave_pat_pay_pat_shared_leave_both_shared_pay
-      outcome :outcome_mat_pay_pat_leave_pat_shared_leave_mat_shared_pay
       outcome :outcome_mat_pay_pat_pay_both_shared_pay
       outcome :outcome_pat_leave
       outcome :outcome_pat_leave_pat_pay
       outcome :outcome_pat_pay
-      outcome :outcome_single_birth_nothing
     end
   end
 end
