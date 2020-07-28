@@ -15,6 +15,7 @@ module SmartAnswer
     def initialize(&block)
       @nodes = []
       status(:draft)
+      show_escape_link(false)
       instance_eval(&block) if block_given?
     end
 
@@ -38,6 +39,11 @@ module SmartAnswer
     def name(name = nil)
       @name = name unless name.nil?
       @name
+    end
+
+    def show_escape_link(escape_link = nil)
+      @show_escape_link = escape_link unless escape_link.nil?
+      @show_escape_link
     end
 
     def satisfies_need(need_content_id)

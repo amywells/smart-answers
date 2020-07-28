@@ -1,0 +1,25 @@
+src_files:
+  - assets/application.js
+
+stylesheets:
+  - assets/application.css
+
+helpers:
+  - 'helpers/**/*.js'
+
+spec_files:
+  - '**/*[Ss]pec.js'
+
+src_dir: "app/assets/javascripts"
+
+spec_dir:
+
+spec_helper: spec/javascripts/support/jasmine_helper.rb
+
+boot_dir:
+
+boot_files:
+tmp_dir: "tmp/jasmine"
+use_phantom_gem: false
+
+random: false

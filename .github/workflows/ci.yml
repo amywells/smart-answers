@@ -48,3 +48,6 @@ jobs:
 
       - name: Run tests
         run: bundle exec rake
+
+      - name: Run JavaScript tests
+        run: bundle exec rake jasmine:ci

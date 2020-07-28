@@ -43,5 +43,15 @@
     <% end %>
 
     <%= render 'previous_answers' %>
+
+    <% if @presenter.flow.show_escape_link %>
+      <%= render "components/escape-link", {
+        text: "Leave this site",
+        href: "https://www.gov.uk/",
+        data_attributes: {
+          "module": "app-escape-link"
+        }
+      } %>
+    <% end %>
   </div>
 </div>

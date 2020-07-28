@@ -35,6 +35,8 @@ end
 
 group :development, :test do
   gem "byebug"
+  gem "jasmine", "~> 3.6.0"
+  gem "jasmine_selenium_runner", "~> 3.0.0", require: false
   gem "pry"
   gem "rubocop-govuk"
 end

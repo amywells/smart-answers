@@ -1,0 +1,5 @@
+<%
+  data_attributes ||= {}
+  data_attributes[:module] = 'app-escape-link'
+%>
+<%= link_to text, href, class: "app-c-escape-link govuk-link", rel: "nofollow noreferrer noopener", target: "_blank", data: data_attributes %>
