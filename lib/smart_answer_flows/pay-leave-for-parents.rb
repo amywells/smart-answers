@@ -7,6 +7,20 @@ module SmartAnswer
       status :published
       satisfies_need "558b11d4-e164-40e2-96a2-f20643fe4539"
 
+      multiple_choice :two_carers do
+        option "yes"
+        option "no"
+
+        on_response do |response|
+          self.calculator = Calculators::PayLeaveForParentsCalculator.new
+          calculator.two_carers = response
+        end
+
+        next_node do
+          outcome :due_date
+        end
+      end
+
       date_question :due_date do
         on_response do |response|
           calculator.due_date = response

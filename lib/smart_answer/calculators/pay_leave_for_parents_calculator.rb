@@ -2,6 +2,7 @@ module SmartAnswer::Calculators
   class PayLeaveForParentsCalculator
     include ActiveModel::Model
 
+    attr_accessor :two_carers
     attr_accessor :due_date
     attr_accessor :employment_status_of_mother
     attr_accessor :employment_status_of_partner
@@ -13,6 +14,10 @@ module SmartAnswer::Calculators
     attr_accessor :partner_started_working_before_continuity_start_date
     attr_accessor :partner_still_working_on_continuity_end_date
     attr_accessor :partner_earned_more_than_lower_earnings_limit
+
+    def two_carers?
+      two_carers == "yes"
+    end
 
     def continuity_start_date
       saturday_before(due_date - 39.weeks)
