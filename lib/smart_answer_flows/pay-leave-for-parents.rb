@@ -140,8 +140,7 @@ module SmartAnswer
           elsif %w[self-employed unemployed].include?(calculator.employment_status_of_partner)
             if calculator.employment_status_of_mother == "employee"
               if calculator.mother_continuity?
-                # TODO (was question :partner_worked_at_least_26_weeks)
-                raise Exception
+                question :partner_started_working_before_continuity_start_date
               elsif calculator.mother_still_working_on_continuity_end_date == "yes"
                 if calculator.mother_earnings_employment?
                   outcome :outcome_mat_allowance_mat_leave
